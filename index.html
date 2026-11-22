@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schulkaa — Auto Order</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nosifer&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:'Segoe UI', sans-serif; background:#050505; color:#c9c9c9;
+    min-height:100vh; padding-bottom:100px;
+    background-image: radial-gradient(circle at 20% 10%, rgba(120,0,0,0.18), transparent 40%), radial-gradient(circle at 80% 90%, rgba(120,0,0,0.15), transparent 40%);
+    overflow-x:hidden; cursor:crosshair;
+  }
+  .blood-drip {
+    position:fixed; top:0; left:0; right:0; height:6px;
+    background:linear-gradient(90deg,#000,#ff0000,#000,#8b0000,#ff0000,#000);
+    background-size:200% 100%; animation:drip 6s linear infinite; z-index:60; opacity:0.7;
+  }
+  @keyframes drip { 0% { background-position:0% 50%; } 100% { background-position:200% 50%; } }
+  .header { text-align:center; padding:3.5rem 1rem 1rem; position:relative; z-index:10; }
+  .header h1 { font-family:'Nosifer', cursive; font-size:2.3rem; color:#ff1a1a; text-shadow:0 0 8px #ff0000, 0 0 20px #8b0000, 0 0 40px #4a0000; letter-spacing:2px; animation:flicker 3s infinite; }
+  .header p { color:#7a7a7a; font-size:0.82rem; margin-top:0.5rem; letter-spacing:1px; text-transform:uppercase; }
+  @keyframes flicker { 0%,19%,21%,23%,25%,54%,56%,100% { opacity:1; } 20%,22%,24%,55% { opacity:0.4; } }
+  
+  .top-actions { position:fixed; top:14px; right:14px; display:flex; gap:8px; z-index:100; }
+  .top-btn { 
+    background:rgba(20,0,0,0.85); color:#ff1a1a; border:1px solid #8b0000; 
+    padding:0 12px; height:42px; border-radius:50px; font-size:0.8rem; font-weight:bold; 
+    cursor:pointer; box-shadow:0 0 15px rgba(255,0,0,0.5); 
+    display:flex; align-items:center; justify-content:center; transition: all 0.3s;
+  }
+  .top-btn:active { transform:scale(0.92); }
+  
+  .music-on {
+    background: #8b0000 !important; 
+    color: #fff !important;
+    box-shadow:0 0 25px rgba(255,0,0,0.9) !important;
+  }
+
+  .grid { display:grid; grid-template-columns:repeat(2,1fr); gap:0.9rem; padding:1rem; max-width:500px; margin:0 auto; position:relative; z-index:10; }
+  .card { background:#0d0d0d; border-radius:14px; overflow:hidden; border:1px solid #2a0000; box-shadow:0 0 15px rgba(255,0,0,0.08), inset 0 0 20px rgba(0,0,0,0.6); position:relative; display:flex; flex-direction:column; }
+  .card .img-container { height:110px; width:100%; position:relative; background:radial-gradient(circle at 50% 50%, #1a0000, #050505); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .card .img-container img { width:100%; height:100%; object-fit:cover; filter:brightness(0.8) contrast(1.1); }
+  .card .info { padding:0.75rem; position:relative; z-index:1; flex:1; display:flex; flex-direction:column; }
+  .card .info h3 { font-size:0.85rem; margin-bottom:0.25rem; color:#e0e0e0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .card .info .price { color:#ff3b3b; font-weight:700; font-size:0.95rem; margin-bottom:0.55rem; }
+  .card-actions { display:flex; gap:0.4rem; margin-top:auto; }
+  .card .add-btn { flex:1; padding:0.55rem; background:transparent; color:#ff1a1a; border:1px solid #8b0000; border-radius:8px; font-weight:700; font-size:0.78rem; text-transform:uppercase; cursor:pointer; }
+  .card .add-btn:active { background:#8b0000; color:#fff; }
+  .card .edit-btn { width:38px; background:transparent; color:#ff1a1a; border:1px solid #8b0000; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.9rem; }
+  .card .edit-btn:active { background:#8b0000; color:#fff; }
+  .cart-bar { position:fixed; bottom:0; left:0; right:0; background:rgba(8,0,0,0.94); backdrop-filter:blur(8px); border-top:1px solid #4a0000; padding:0.9rem 1rem; display:flex; justify-content:space-between; align-items:center; max-width:500px; margin:0 auto; z-index:50; gap:0.6rem; }
+  .cart-bar .info { font-size:0.78rem; color:#888; }
+  .cart-bar .info strong { color:#ff1a1a; font-size:1rem; display:block; }
+  .order-btn { background:linear-gradient(135deg,#8b0000,#ff0000); color:#fff; border:none; padding:0.75rem 1.2rem; border-radius:50px; font-weight:800; font-size:0.82rem; text-transform:uppercase; cursor:pointer; flex:1; text-align:center; }
+  .btn-view { background:transparent; color:#ff1a1a; border:1px solid #8b0000; padding:0.7rem 0.9rem; border-radius:50px; font-weight:700; font-size:0.78rem; cursor:pointer; }
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(4px); z-index:200; opacity:0; visibility:hidden; transition:opacity 0.3s; display:flex; align-items:center; justify-content:center; padding:1rem; }
+  .modal-overlay.show { opacity:1; visibility:visible; }
+  .modal { width:100%; max-width:400px; background:#0d0000; border:1px solid #4a0000; border-radius:14px; padding:1.4rem; box-shadow:0 0 50px rgba(255,0,0,0.3); transform:scale(0.9); transition:transform 0.3s; max-height:90vh; overflow-y:auto; }
+  .modal-overlay.show .modal { transform:scale(1); }
+  .modal h2 { color:#ff1a1a; font-family:'Nosifer', cursive; font-size:1.2rem; margin-bottom:1rem; border-bottom:1px solid #2a0000; padding-bottom:0.5rem; }
+  .form-group { margin-bottom:0.8rem; }
+  .form-group label { display:block; font-size:0.75rem; color:#888; margin-bottom:0.3rem; text-transform:uppercase; }
+  .form-group input { width:100%; padding:0.6rem; background:#1a0000; border:1px solid #4a0000; color:#fff; border-radius:6px; font-family:inherit; font-size:0.85rem; }
+  .form-group input:focus { outline:none; border-color:#ff0000; }
+  .btn-submit { width:100%; padding:0.8rem; background:#8b0000; color:#fff; border:none; border-radius:8px; font-weight:bold; cursor:pointer; margin-top:0.5rem; }
+  .btn-danger { width:100%; padding:0.8rem; background:transparent; color:#ff1a1a; border:1px solid #8b0000; border-radius:8px; font-weight:bold; cursor:pointer; margin-top:0.5rem; }
+  .cart-list { max-height:40vh; overflow-y:auto; margin-bottom:1rem; }
+  .cart-row { display:flex; gap:0.7rem; align-items:center; padding:0.75rem 0; border-bottom:1px solid #1a0000; }
+  .cart-row .emoji { font-size:1.8rem; width:44px; height:44px; display:flex; align-items:center; justify-content:center; background:#1a0000; border-radius:10px; overflow:hidden; }
+  .cart-row .emoji img { width:100%; height:100%; object-fit:cover; }
+  .cart-row .detail { flex:1; min-width:0; }
+  .cart-row .detail .nm { font-size:0.85rem; color:#e0e0e0; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .cart-row .detail .pr { font-size:0.8rem; color:#ff3b3b; margin-top:0.15rem; }
+  .cart-row .qty { display:flex; align-items:center; gap:0.4rem; margin-top:0.35rem; }
+  .cart-row .qty button { width:26px; height:26px; border:1px solid #8b0000; background:transparent; color:#ff1a1a; border-radius:6px; cursor:pointer; }
+  .cart-row .qty span { color:#ff3b3b; font-weight:700; font-size:0.85rem; min-width:22px; text-align:center; }
+  .cart-row .del-btn { background:transparent; border:1px solid #4a0000; color:#ff3b3b; width:32px; height:32px; border-radius:8px; cursor:pointer; }
+  .close-btn { width:100%; padding:0.6rem; background:transparent; border:1px solid #4a0000; color:#888; border-radius:8px; margin-top:0.5rem; cursor:pointer; }
+</style>
+</head>
+<body>
+
+  <div class="blood-drip"></div>
+  
+  <div class="top-actions">
+    <button class="top-btn" onclick="bukaFormProduk()">➕ Produk</button>
+    <button class="top-btn" id="btnMusik" onclick="toggleSound()">🎵 MUSIK OFF</button>
+  </div>
+
+  <div class="header">
+    <h1>SCHULKAA</h1>
+    <p>Order kalau berani... 🩸</p>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="cart-bar">
+    <div class="info">
+      <strong id="totalItem">0 item</strong>
+      <span id="totalHarga">Rp 0</span>
+    </div>
+    <button class="btn-view" onclick="bukaKeranjang()">📜 Daftar</button>
+    <button class="order-btn" onclick="orderWA()">🩸 Order</button>
+  </div>
+
+  <div class="modal-overlay" id="modalProduk">
+    <div class="modal">
+      <h2 id="titleForm">🩸 Produk Baru</h2>
+      <input type="hidden" id="editId">
+      <div class="form-group"><label>Nama Produk</label><input type="text" id="inpNama" placeholder="Cth: Topeng Terkutuk"></div>
+      <div class="form-group"><label>Harga (Angka saja)</label><input type="number" id="inpHarga" placeholder="Cth: 50000"></div>
+      <div class="form-group"><label>Link Gambar (URL)</label><input type="url" id="inpGambar" placeholder="https://.../gambar.jpg"></div>
+      <button class="btn-submit" onclick="simpanProduk()">💾 Simpan Produk</button>
+      <button class="btn-danger" id="btnHapusProduk" onclick="hapusProduk()" style="display:none;">🗑️ Hapus Produk Ini</button>
+      <button class="close-btn" onclick="tutupModal('modalProduk')">Batal</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalKeranjang">
+    <div class="modal">
+      <h2>🩸 Keranjang</h2>
+      <div class="cart-list" id="cartList"></div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:1rem; font-weight:bold; color:#ff1a1a;"><span>Total:</span><span id="modalTotal">Rp 0</span></div>
+      <button class="btn-submit" onclick="orderWA()">Order via WhatsApp</button>
+      <button class="btn-danger" onclick="kosongkanKeranjang()">Kosongkan Keranjang</button>
+      <button class="close-btn" onclick="tutupModal('modalKeranjang')">Tutup</button>
+    </div>
+  </div>
+
+<script>
+  // ===== DUA NOMOR WA KAMU =====
+  const WA_1 = "6283119756828"; // Admin 1
+  const WA_2 = "6287721106278"; // Admin 2
+  
+  // ===== LINK MP3 KAMU =====
+  const LINK_MP3 = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"; 
+
+  const produkDefault = []; 
+  if (!localStorage.getItem("schulkaa_versi_gambar")) {
+    localStorage.removeItem("schulkaa_produk"); localStorage.removeItem("schulkaa_keranjang"); localStorage.setItem("schulkaa_versi_gambar", "true");
+  }
+  let produk = JSON.parse(localStorage.getItem("schulkaa_produk")) || [...produkDefault];
+  let keranjang = JSON.parse(localStorage.getItem("schulkaa_keranjang")) || [];
+  const rp = n => "Rp " + n.toLocaleString("id-ID");
+
+  function simpanKeMemori() {
+    localStorage.setItem("schulkaa_produk", JSON.stringify(produk));
+    localStorage.setItem("schulkaa_keranjang", JSON.stringify(keranjang));
+  }
+
+  function render() {
+    const grid = document.getElementById("grid");
+    if(produk.length === 0) {
+      grid.innerHTML = `<p style="grid-column:1/-1; text-align:center; color:#666; padding-top:2rem;">Belum ada produk.<br>Klik ➕ Produk di atas.</p>`;
+      return;
+    }
+    grid.innerHTML = produk.map(p => `
+      <div class="card">
+        <div class="img-container"><img src="${p.gambar}" alt="${p.nama}" onerror="this.src='https://via.placeholder.com/150x150/1a0000/ff0000?text=No+Image'"></div>
+        <div class="info">
+          <h3>${p.nama}</h3>
+          <div class="price">${rp(p.harga)}</div>
+          <div class="card-actions">
+            <button class="add-btn" onclick="tambah(${p.id})">+ Ambil</button>
+            <button class="edit-btn" onclick="bukaFormProduk(${p.id})">✏️</button>
+          </div>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  function bukaFormProduk(id = null) {
+    document.getElementById("inpNama").value = ""; document.getElementById("inpHarga").value = ""; document.getElementById("inpGambar").value = ""; document.getElementById("editId").value = ""; document.getElementById("titleForm").textContent = "🩸 Produk Baru"; document.getElementById("btnHapusProduk").style.display = "none";
+    if (id) {
+      const p = produk.find(x => x.id === id);
+      if (p) {
+        document.getElementById("titleForm").textContent = "✏️ Edit Produk"; document.getElementById("inpNama").value = p.nama; document.getElementById("inpHarga").value = p.harga; document.getElementById("inpGambar").value = p.gambar || ""; document.getElementById("editId").value = p.id; document.getElementById("btnHapusProduk").style.display = "block";
+      }
+    }
+    document.getElementById("modalProduk").classList.add("show");
+  }
+
+  function simpanProduk() {
+    const nama = document.getElementById("inpNama").value; const harga = document.getElementById("inpHarga").value; const gambar = document.getElementById("inpGambar").value; const editId = document.getElementById("editId").value;
+    if(!nama || !harga) return alert("Nama dan Harga wajib diisi!");
+    if (editId) {
+      const index = produk.findIndex(x => x.id == editId);
+      if (index !== -1) { produk[index].nama = nama; produk[index].harga = parseInt(harga); produk[index].gambar = gambar; }
+    } else {
+      const newId = produk.length > 0 ? Math.max(...produk.map(p => p.id)) + 1 : 1; produk.push({ id: newId, nama: nama, harga: parseInt(harga), gambar: gambar });
+    }
+    simpanKeMemori(); tutupModal("modalProduk"); render(); alert("Produk berhasil disimpan! 🩸");
+  }
+
+  function hapusProduk() {
+    const editId = document.getElementById("editId").value;
+    if(!editId) return;
+    if(confirm("Yakin mau hapus produk ini dari etalase?")) {
+      produk = produk.filter(x => x.id != editId); keranjang = keranjang.filter(x => x.id != editId);
+      simpanKeMemori(); tutupModal("modalProduk"); render(); update();
+    }
+  }
+
+  function tambah(id) {
+    const p = produk.find(x => x.id === id); if (!p) return;
+    const item = keranjang.find(x => x.id === id);
+    if (item) item.qty++; else keranjang.push({ ...p, qty:1 });
+    simpanKeMemori(); update();
+  }
+
+  function ubahQty(id, delta) {
+    const item = keranjang.find(x => x.id === id); if (!item) return;
+    item.qty += delta; if (item.qty <= 0) keranjang = keranjang.filter(x => x.id !== id);
+    simpanKeMemori(); update();
+  }
+
+  function hapusItem(id) { keranjang = keranjang.filter(x => x.id !== id); simpanKeMemori(); update(); }
+  function kosongkanKeranjang() { if(confirm("Kosongkan semua isi keranjang?")) { keranjang = []; simpanKeMemori(); update(); } }
+
+  function update() {
+    const q = keranjang.reduce((s,i)=>s+i.qty,0); const h = keranjang.reduce((s,i)=>s+i.harga*i.qty,0);
+    document.getElementById("totalItem").textContent = q + " item"; document.getElementById("totalHarga").textContent = rp(h); document.getElementById("modalTotal").textContent = rp(h); renderCartList();
+  }
+
+  function renderCartList() {
+    const list = document.getElementById("cartList");
+    if (keranjang.length === 0) { list.innerHTML = `<p style="color:#666; text-align:center; padding:1rem;">Kosong 🕳️</p>`; return; }
+    list.innerHTML = keranjang.map(i => `
+      <div class="cart-row">
+        <div class="emoji"><img src="${i.gambar}" onerror="this.src='https://via.placeholder.com/150x150/1a0000/ff0000?text=No'"></div>
+        <div class="detail">
+          <div class="nm">${i.nama}</div>
+          <div class="pr">${rp(i.harga * i.qty)}</div>
+          <div class="qty"><button onclick="ubahQty(${i.id}, -1)">−</button><span>${i.qty}</span><button onclick="ubahQty(${i.id}, 1)">+</button></div>
+        </div>
+        <button class="del-btn" onclick="hapusItem(${i.id})">🗑️</button>
+      </div>
+    `).join("");
+  }
+
+  function bukaKeranjang() { if (keranjang.length === 0) return alert("Keranjang kosong 🕳️"); document.getElementById("modalKeranjang").classList.add("show"); }
+  function tutupModal(id) { document.getElementById(id).classList.remove("show"); }
+
+  // ===== LOGIKA ORDER PILIH NOMOR =====
+  function orderWA() {
+    if (keranjang.length === 0) return alert("Pilih produk dulu!");
+    
+    // Tanya mau kirim ke Admin 1 atau 2
+    let pilihan = prompt("Mau kirim pesanan ke Admin mana?\nKetik angka 1 atau 2\n\n1. Admin 1 (6283119756828)\n2. Admin 2 (6287721106278)", "1");
+    
+    let nomorTujuan = "";
+    if (pilihan === "1") {
+      nomorTujuan = WA_1;
+    } else if (pilihan === "2") {
+      nomorTujuan = WA_2;
+    } else {
+      return; // Kalau batal atau ketik ngawur, hentikan proses
+    }
+
+    let pesan = "Halo Schulkaa, saya mau order:%0A%0A";
+    keranjang.forEach(i => pesan += `• ${i.nama} x${i.qty} = ${rp(i.harga*i.qty)}%0A`);
+    const total = keranjang.reduce((s,i)=>s+i.harga*i.qty,0);
+    pesan += `%0A*Total: ${rp(total)}*%0A%0ASegera proses 🩸`;
+    
+    window.open(`https://wa.me/${nomorTujuan}?text=${pesan}`, "_blank");
+  }
+
+  // ===== LOGIKA MUSIK ON/OFF =====
+  let audioLagu = new Audio(LINK_MP3);
+  audioLagu.loop = true; 
+  let soundOn = false;
+
+  function toggleSound() {
+    soundOn = !soundOn;
+    const btn = document.getElementById("btnMusik");
+    
+    if (soundOn) {
+      btn.textContent = "🔊 MUSIK ON"; 
+      btn.classList.add("music-on"); 
+      audioLagu.play().catch(e => alert("Gagal memutar lagu. Cek koneksi atau link MP3."));
+    } else {
+      btn.textContent = "🎵 MUSIK OFF"; 
+      btn.classList.remove("music-on"); 
+      audioLagu.pause(); 
+    }
+  }
+
+  render(); update();
+</script>
+
+</body>
+  </html>
