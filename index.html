@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="id"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Schulkaa — Auto Order</title>
+<link href="https://fonts.googleapis.com/css2?family=Nosifer&amp;display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+button{font-family:inherit;touch-action:manipulation}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#050505;color:#c9c9c9;min-height:100vh;padding-bottom:120px;background-image:radial-gradient(circle at 50% 0,rgba(80,0,0,.3) 0,#050505 70%)}
+body::before{content:"";position:fixed;inset:-30px;background:url() center/cover no-repeat;filter:blur(5px) brightness(.95);z-index:-1;pointer-events:none}
+.card{background:rgba(10,10,10,.82)!important}
+.blood{position:fixed;top:0;left:0;right:0;height:6px;background:linear-gradient(90deg,#000,#f00,#000,#8b0000,#f00,#000);z-index:60;opacity:.8;pointer-events:none}
+.header{text-align:center;padding:2rem 1rem 1rem}
+.welcome{color:#888;font-size:.8rem;letter-spacing:4px;text-transform:uppercase;margin-bottom:.5rem;font-weight:700}
+.header h1{font-family:'Nosifer',Impact,cursive;font-size:2.5rem;color:#f00;text-shadow:0 0 15px #f00,0 0 30px #8b0000;letter-spacing:3px;margin-bottom:.5rem}
+.header p{color:#f44;font-size:.85rem;letter-spacing:2px;text-transform:uppercase}
+.actions{display:flex;justify-content:center;gap:10px;margin:1.5rem auto;padding:0 1rem;flex-wrap:wrap;max-width:400px}
+.top-btn{background:#0a0000;color:#ff1a1a;border:1px solid #8b0000;padding:12px 20px;border-radius:4px;font-size:.85rem;font-weight:700;cursor:pointer;box-shadow:0 0 10px rgba(255,0,0,.2);min-width:120px;text-transform:uppercase}
+.top-btn:active{background:#f00;color:#fff;transform:scale(.95)}
+.music-on{background:#8b0000!important;color:#fff!important}
+#btnAdmin{display:none}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;padding:1rem;max-width:500px;margin:0 auto}
+.card{background:#0a0a0a;border-radius:4px;overflow:hidden;border:1px solid #2a0000;display:flex;flex-direction:column}
+.img{height:110px;background:#0d0000;display:flex;align-items:center;justify-content:center;font-size:3rem;border-bottom:1px solid #1a0000}
+.img img{width:100%;height:100%;object-fit:cover}
+.info{padding:.75rem;flex:1;display:flex;flex-direction:column}
+.info h3{font-size:.85rem;margin-bottom:.25rem;color:#ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.price{color:#f00;font-weight:800;font-size:1rem;margin-bottom:.55rem}
+.ca{display:flex;gap:.4rem;margin-top:auto;align-items:center}
+.qc{flex:1;justify-content:space-between;display:flex;align-items:center;background:#0a0000;border:1px solid #4a0000;border-radius:4px;overflow:hidden}
+.qb{background:transparent;color:#ff1a1a;border:none;width:28px;height:32px;font-size:1.2rem;font-weight:700;cursor:pointer}
+.qb:active{background:#8b0000;color:#fff}
+.qn{color:#fff;font-size:.9rem;font-weight:700;width:24px;text-align:center}
+.add{flex:1;padding:.55rem;background:#1a0000;color:#ff1a1a;border:1px solid #4a0000;border-radius:4px;font-weight:700;font-size:.75rem;cursor:pointer;text-transform:uppercase}
+.add:active{background:#f00;color:#fff}
+.edit{width:32px;height:32px;background:transparent;color:#ff1a1a;border:1px solid #4a0000;border-radius:4px;cursor:pointer}
+.bar{position:fixed;bottom:0;left:0;right:0;background:rgba(5,0,0,.95);border-top:1px solid #4a0000;padding:.8rem 1rem calc(.8rem + env(safe-area-inset-bottom,0px));display:flex;justify-content:space-between;align-items:center;max-width:500px;margin:0 auto;z-index:9999;gap:.6rem}
+.bar .t{font-size:.78rem;color:#888}
+.bar .t strong{color:#f00;font-size:1.1rem;display:block}
+.order{background:#8b0000;color:#fff;border:1px solid #f00;padding:.75rem 1.2rem;border-radius:4px;font-weight:800;font-size:.85rem;cursor:pointer;flex:1;text-transform:uppercase}
+.order:active{background:#f00;transform:scale(.95)}
+.view{background:transparent;color:#ff1a1a;border:1px solid #4a0000;padding:.7rem .9rem;border-radius:4px;font-weight:700;font-size:.78rem;cursor:pointer}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:10000;opacity:0;visibility:hidden;transition:opacity .2s;display:flex;align-items:center;justify-content:center;padding:1rem}
+.ov.show{opacity:1;visibility:visible}
+.modal{width:100%;max-width:400px;background:#0a0000;border:1px solid #8b0000;border-radius:8px;padding:1.4rem;max-height:90vh;overflow-y:auto}
+.modal h2{color:#f00;font-family:'Nosifer',Impact,cursive;font-size:1.2rem;margin-bottom:1rem;border-bottom:1px solid #2a0000;padding-bottom:.5rem}
+.fg{margin-bottom:.8rem}
+.fg label{display:block;font-size:.75rem;color:#888;margin-bottom:.3rem;text-transform:uppercase}
+.fg input[type=text],.fg input[type=number],.fg input[type=password]{width:100%;padding:.6rem;background:#000;border:1px solid #4a0000;color:#fff;border-radius:4px;font-size:16px}
+.fu{display:block;padding:1rem;background:#000;border:1px dashed #8b0000;border-radius:4px;text-align:center;color:#ff1a1a;cursor:pointer;font-size:.85rem;font-weight:700}
+#prev{width:100%;height:100px;object-fit:cover;border-radius:4px;margin-top:10px;display:none;border:1px solid #4a0000}
+.sub,.dng,.cls{width:100%;padding:.8rem;border-radius:4px;font-weight:700;cursor:pointer;margin-top:.5rem;text-transform:uppercase}
+.sub{background:#8b0000;color:#fff;border:1px solid #f00}
+.dng{background:transparent;color:#ff1a1a;border:1px solid #4a0000}
+.cls{background:transparent;border:1px solid #4a0000;color:#888;text-transform:none;font-weight:400}
+.cl{max-height:40vh;overflow-y:auto;margin-bottom:1rem}
+.cr{display:flex;gap:.7rem;align-items:center;padding:.75rem 0;border-bottom:1px solid #1a0000}
+.cr .em{font-size:1.8rem;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:#000;border-radius:4px;overflow:hidden}
+.cr .em img{width:100%;height:100%;object-fit:cover}
+.cr .d{flex:1;min-width:0}
+.cr .nm{font-size:.85rem;color:#e0e0e0;font-weight:600}
+.cr .pr{font-size:.8rem;color:#f00;font-weight:700}
+.cr .q{display:flex;align-items:center;gap:.4rem;margin-top:.35rem}
+.cr .q button{width:26px;height:26px;border:1px solid #4a0000;background:transparent;color:#ff1a1a;border-radius:4px;cursor:pointer}
+.cr .q span{color:#fff;font-weight:700;font-size:.85rem;min-width:22px;text-align:center}
+.cr .del{background:transparent;border:1px solid #4a0000;color:#ff1a1a;width:32px;height:32px;border-radius:4px;cursor:pointer}
+.empty{text-align:center;color:#666;padding:1rem}
+#toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:#8b0000;color:#fff;padding:.7rem 1.1rem;border-radius:4px;font-size:.85rem;z-index:20000;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90%;text-align:center}
+#toast.show{opacity:1}
+</style><style>artifact-sync,artifact-local{display:contents}</style>
+<style>artifact-sync,artifact-local{display:contents}</style></head>
+<body>
+<div class="blood"></div>
+<div class="header">
+  <div class="welcome">WELCOME THE PRODUK</div>
+  <h1>SCHULKAA</h1>
+  <p>Order kalau berani... 🩸</p>
+  <div class="actions">
+    <button class="top-btn" id="btnLogin" data-a="login">🔒 Admin</button>
+    <button class="top-btn" id="btnAdmin" data-a="form">➕ Produk</button>
+    <button class="top-btn" id="btnPub" data-a="pub" style="display:none">☁️ Terbitkan</button>
+    <button class="top-btn" id="btnMusik" data-a="music">🎵 Musik: OFF</button>
+  </div>
+</div>
+<div class="grid" id="grid"></div>
+
+<div class="bar">
+  <div class="t"><strong id="totalItem">0 item</strong><span id="totalHarga">Rp 0</span></div>
+  <button class="view" data-a="cart">📜 Daftar</button>
+  <button class="order" data-a="order">🩸 Order</button>
+</div>
+
+<div class="ov" id="modalLogin"><div class="modal">
+  <h2>🔒 Admin</h2>
+  <div class="fg"><label>Password</label><input type="password" id="inpPass" placeholder="Password admin"></div>
+  <button class="sub" data-a="doLogin">Masuk</button>
+  <button class="cls" data-a="close" data-m="modalLogin">Batal</button>
+</div></div>
+
+<div class="ov" id="modalWA"><div class="modal">
+  <h2>🩸 Pilih Admin</h2>
+  <button class="sub" data-a="sendWA" data-n="1">WhatsApp Admin 1</button>
+  <button class="sub" data-a="sendWA" data-n="2">WhatsApp Admin 2</button>
+  <button class="cls" data-a="close" data-m="modalWA">Batal</button>
+</div></div>
+
+<div class="ov" id="modalProduk"><div class="modal">
+  <h2 id="titleForm">🩸 Produk Baru</h2>
+  <input type="hidden" id="editId" value="">
+  <div class="fg"><label>Nama Produk</label><input type="text" id="inpNama" placeholder="Cth: Topeng"></div>
+  <div class="fg"><label>Harga</label><input type="number" id="inpHarga" placeholder="Cth: 50000"></div>
+  <div class="fg"><label>Foto</label>
+    <div class="fu" style="position:relative;overflow:hidden">📸 Pilih Foto<input type="file" id="inpFile" accept="image/*" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:100px"></div>
+    <img id="prev" alt="Preview">
+  </div>
+  <button class="sub" data-a="save">💾 Simpan Produk</button>
+  <button class="dng" id="btnHapus" data-a="delProd" style="display:none">🗑️ Hapus Produk</button>
+  <button class="cls" data-a="close" data-m="modalProduk">Batal</button>
+</div></div>
+
+<div class="ov" id="modalKeranjang"><div class="modal">
+  <h2>🩸 Keranjang</h2>
+  <div class="cl" id="cartList"></div>
+  <div style="display:flex;justify-content:space-between;margin-bottom:1rem;font-weight:700;color:#f00"><span>Total:</span><span id="modalTotal">Rp 0</span></div>
+  <button class="sub" data-a="order">Order via WhatsApp</button>
+  <button class="dng" data-a="clear">Kosongkan</button>
+  <button class="cls" data-a="close" data-m="modalKeranjang">Tutup</button>
+</div></div>
+
+<div id="toast" class=""></div>
+
+<script type="application/json" id="pdata">{"v":2,"items":[]}</script>
+<script>
+(function(){
+var PASSWORD_ADMIN="schulkaa123";
+var WA={1:"6283119756828",2:"6287721106278"};
+var KEY="schulkaa_produk",KEY_ADMIN="schulkaa_admin";
+function rp(n){return "Rp "+Number(n).toLocaleString("id-ID");}
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+
+var produk=[],keranjang=[],qtyPilih={},gambar="",isAdmin=false,delArmed=false;
+var DEFAULT=[
+ {id:1,nama:"Topeng Horor",harga:50000,emoji:"🎭",img:""},
+ {id:2,nama:"Pisau Mainan",harga:25000,emoji:"🔪",img:""},
+ {id:3,nama:"Lilin Darah",harga:35000,emoji:"🕯️",img:""},
+ {id:4,nama:"Tengkorak",harga:75000,emoji:"💀",img:""}
+];
+
+var tt;
+function toast(m){var t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(tt);tt=setTimeout(function(){t.classList.remove("show");},2200);}
+function open_(id){$(id).classList.add("show");}
+function close_(id){$(id).classList.remove("show");}
+
+var pdata={v:0,items:DEFAULT.slice()};
+function load(){
+  try{pdata=JSON.parse($("pdata").textContent);}catch(e){}
+  produk=Array.isArray(pdata.items)?pdata.items.slice():DEFAULT.slice();
+  try{isAdmin=localStorage.getItem(KEY_ADMIN)==="true";}catch(e){}
+  if(isAdmin&&!pdata.v){try{var s=localStorage.getItem(KEY);if(s){produk=JSON.parse(s);setTimeout(function(){toast("Produk lama dimuat. Tekan ☁️ Terbitkan");},600);}}catch(e){}}
+  setAdmin();
+}
+function setAdmin(){$("btnLogin").style.display=isAdmin?"none":"block";$("btnAdmin").style.display=isAdmin?"block":"none";$("btnPub").style.display=isAdmin?"block":"none";}
+function snapshot(){
+  var c=document.documentElement.cloneNode(true);
+  function q(id){return c.querySelector("#"+id);}
+  q("pdata").textContent=JSON.stringify({v:(pdata.v||0)+1,items:produk}).replace(/</g,"\\u003c");
+  q("grid").innerHTML="";q("cartList").innerHTML="";
+  ["modalLogin","modalWA","modalProduk","modalKeranjang"].forEach(function(i){q(i).classList.remove("show");});
+  var t=q("toast");t.className="";t.textContent="";
+  q("btnLogin").removeAttribute("style");q("btnAdmin").removeAttribute("style");q("btnPub").setAttribute("style","display:none");
+  var mb=q("btnMusik");mb.className="top-btn";mb.textContent="🎵 Musik: OFF";
+  var pv=q("prev");pv.removeAttribute("style");pv.removeAttribute("src");
+  q("btnHapus").setAttribute("style","display:none");
+  return "<!DOCTYPE html>\n"+c.outerHTML;
+}
+var pubBusy=false;
+function publishNow(){
+  if(pubBusy)return;
+  if(!window.claude||!window.claude.use){toast("Fitur simpan tidak tersedia di sini");return;}
+  pubBusy=true;toast("Menyimpan untuk semua orang...");
+  window.claude.use("artifact").then(function(art){
+    if(!art){pubBusy=false;toast("Hanya pemilik halaman yang bisa menyimpan");return;}
+    return art.publish(snapshot()).then(function(){toast("Tersimpan ✓");}).catch(function(e){
+      toast(e&&e.code==="conflict"?"Ada perubahan lain, halaman dimuat ulang":"Gagal menyimpan: "+((e&&(e.code||e.message))||"error"));
+    }).then(function(){pubBusy=false;});
+  }).catch(function(){pubBusy=false;toast("Gagal menyimpan");});
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(produk));}catch(e){}publishNow();}
+
+function imgOf(p){return p.img?'<img src="'+p.img+'" alt="">':(p.emoji||"🩸");}
+function render(){
+  $("grid").innerHTML=produk.map(function(p){
+    var ci=keranjang.find(function(k){return k.id===p.id;});var q=ci?ci.qty:0;
+    return '<div class="card"><div class="img">'+imgOf(p)+'</div><div class="info"><h3>'+esc(p.nama)+'</h3><div class="price">'+rp(p.harga)+'</div><div class="ca">'
+    +'<div class="qc"><button class="qb" data-a="step" data-id="'+p.id+'" data-d="-1">−</button><span class="qn">'+q+'</span><button class="qb" data-a="step" data-id="'+p.id+'" data-d="1">+</button></div>'
+    +(isAdmin?'<button class="edit" data-a="form" data-id="'+p.id+'">✏️</button>':'')
+    +'</div></div></div>';
+  }).join("")||'<div class="empty" style="grid-column:1/-1">Belum ada produk.</div>';
+  updateBar();
+}
+function totalInfo(){var n=0,h=0;keranjang.forEach(function(k){var p=produk.find(function(x){return x.id===k.id;});if(p){n+=k.qty;h+=k.qty*p.harga;}});return{n:n,h:h};}
+function updateBar(){var t=totalInfo();$("totalItem").textContent=t.n+" item";$("totalHarga").textContent=rp(t.h);}
+function renderCart(){
+  keranjang=keranjang.filter(function(k){return produk.some(function(p){return p.id===k.id;});});
+  $("cartList").innerHTML=keranjang.map(function(k){
+    var p=produk.find(function(x){return x.id===k.id;});
+    return '<div class="cr"><div class="em">'+imgOf(p)+'</div><div class="d"><div class="nm">'+esc(p.nama)+'</div><div class="pr">'+rp(p.harga*k.qty)+'</div>'
+    +'<div class="q"><button data-a="cq" data-id="'+k.id+'" data-d="-1">−</button><span>'+k.qty+'</span><button data-a="cq" data-id="'+k.id+'" data-d="1">+</button></div></div>'
+    +'<button class="del" data-a="ci" data-id="'+k.id+'">🗑️</button></div>';
+  }).join("")||'<div class="empty">Keranjang kosong 🩸</div>';
+  $("modalTotal").textContent=rp(totalInfo().h);updateBar();
+}
+
+function openForm(id){
+  gambar="";delArmed=false;$("prev").style.display="none";$("inpFile").value="";
+  var p=id?produk.find(function(x){return x.id===id;}):null;
+  $("editId").value=p?p.id:"";
+  $("titleForm").textContent=p?"🩸 Edit Produk":"🩸 Produk Baru";
+  $("inpNama").value=p?p.nama:"";$("inpHarga").value=p?p.harga:"";
+  $("btnHapus").style.display=p?"block":"none";$("btnHapus").textContent="🗑️ Hapus Produk";
+  if(p&&p.img){gambar=p.img;$("prev").src=p.img;$("prev").style.display="block";}
+  open_("modalProduk");
+}
+$("inpFile").addEventListener("change",function(){
+  var f=this.files[0];if(!f)return;
+  var r=new FileReader();
+  r.onload=function(e){
+    var im=new Image();
+    im.onload=function(){
+      var s=Math.min(1,400/Math.max(im.width,im.height));
+      var c=document.createElement("canvas");c.width=im.width*s;c.height=im.height*s;
+      c.getContext("2d").drawImage(im,0,0,c.width,c.height);
+      gambar=c.toDataURL("image/jpeg",.7);
+      $("prev").src=gambar;$("prev").style.display="block";toast("Foto siap ✓");
+    };
+    im.onerror=function(){toast("Foto tidak bisa dibaca, coba foto lain");};
+    im.src=e.target.result;
+  };
+  r.onerror=function(){toast("Gagal membaca file");};
+  r.readAsDataURL(f);
+});
+function saveProd(){
+  var nama=$("inpNama").value.trim(),harga=parseInt($("inpHarga").value,10);
+  if(!nama||isNaN(harga)){toast("Isi nama dan harga!");return;}
+  var id=parseInt($("editId").value,10);
+  if(id){var p=produk.find(function(x){return x.id===id;});p.nama=nama;p.harga=harga;if(gambar)p.img=gambar;}
+  else produk.push({id:Date.now(),nama:nama,harga:harga,emoji:"🩸",img:gambar});
+  save();render();close_("modalProduk");toast("Produk tersimpan");
+}
+function delProd(){
+  if(!delArmed){delArmed=true;$("btnHapus").textContent="⚠️ Klik lagi untuk yakin";return;}
+  var id=parseInt($("editId").value,10);
+  produk=produk.filter(function(x){return x.id!==id;});
+  keranjang=keranjang.filter(function(k){return k.id!==id;});
+  save();render();close_("modalProduk");
+}
+
+function buildMsg(){
+  var m="Halo Schulkaa, saya mau order:\n\n",i=0;
+  keranjang.forEach(function(k){var p=produk.find(function(x){return x.id===k.id;});if(p){i++;m+=i+". "+p.nama+" x"+k.qty+" = "+rp(p.harga*k.qty)+"\n";}});
+  return m+"\nTotal: "+rp(totalInfo().h);
+}
+function sendWA(n){
+  var url="https://wa.me/"+WA[n]+"?text="+encodeURIComponent(buildMsg());
+  close_("modalWA");
+  var w=window.open(url,"_blank");
+  if(!w){try{window.top.location.href=url;}catch(e){location.href=url;}}
+}
+
+/* ===== MUSIK HOROR ===== */
+var playing=false,synth=null;
+function startHorror(){
+  var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+  var ctx=new AC();if(ctx.state==="suspended")ctx.resume();
+  var timers=[];
+  function later(fn,ms){timers.push(setTimeout(fn,ms));}
+  function loop(fn,min,max){(function r(){fn();later(r,min+Math.random()*(max-min));})();}
+  var master=ctx.createGain();master.gain.value=.6;master.connect(ctx.destination);
+  var len=ctx.sampleRate*3,rb=ctx.createBuffer(2,len,ctx.sampleRate);
+  for(var c=0;c<2;c++){var d=rb.getChannelData(c);for(var i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.5);}
+  var conv=ctx.createConvolver();conv.buffer=rb;var wet=ctx.createGain();wet.gain.value=.7;
+  master.connect(conv);conv.connect(wet);wet.connect(ctx.destination);
+  var nb=ctx.createBuffer(1,ctx.sampleRate*2,ctx.sampleRate),nd=nb.getChannelData(0);
+  for(var j=0;j<nd.length;j++)nd[j]=Math.random()*2-1;
+  /* drone disonan */
+  var lp=ctx.createBiquadFilter();lp.type="lowpass";lp.frequency.value=260;lp.Q.value=4;lp.connect(master);
+  var lfo=ctx.createOscillator(),lg=ctx.createGain();lfo.frequency.value=.08;lg.gain.value=140;lfo.connect(lg);lg.connect(lp.frequency);lfo.start();
+  [36.7,38.9,55,58.3].forEach(function(f){var o=ctx.createOscillator();o.type="sawtooth";o.frequency.value=f;var g=ctx.createGain();g.gain.value=.12;o.connect(g);g.connect(lp);o.start();});
+  /* detak jantung */
+  function thump(dt){var t=ctx.currentTime+dt,o=ctx.createOscillator(),g=ctx.createGain();o.frequency.setValueAtTime(80,t);o.frequency.exponentialRampToValueAtTime(35,t+.18);g.gain.setValueAtTime(.7,t);g.gain.exponentialRampToValueAtTime(.001,t+.3);o.connect(g);g.connect(master);o.start(t);o.stop(t+.35);}
+  loop(function(){thump(0);thump(.28);},1300,1300);
+  /* jeritan melengking */
+  function shriek(){var t=ctx.currentTime,o=ctx.createOscillator(),g=ctx.createGain(),v=ctx.createOscillator(),vg=ctx.createGain(),f=600+Math.random()*700;
+    o.type="triangle";o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(f*1.6,t+2.5);
+    v.frequency.value=6;vg.gain.value=25;v.connect(vg);vg.connect(o.frequency);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.07,t+1.2);g.gain.linearRampToValueAtTime(0,t+3);
+    o.connect(g);g.connect(master);o.st
