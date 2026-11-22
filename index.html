@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Schulkaa — Auto Order</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nosifer&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  
+  body { 
+    font-family:'Segoe UI', sans-serif; background:#050505; color:#c9c9c9; 
+    min-height:100vh; padding-bottom:120px; 
+    background-image: radial-gradient(circle at 50% 0%, rgba(80,0,0,0.4) 0%, #050505 70%);
+    overflow-x: hidden;
+  }
+  
+  /* Garis Darah Atas */
+  .blood-drip {
+    position: fixed; top: 0; left: 0; right: 0; height: 6px;
+    background: linear-gradient(90deg,#000,#ff0000,#000,#8b0000,#ff0000,#000);
+    background-size: 200% 100%; animation: drip 3s linear infinite; z-index: 60; opacity: 0.8;
+  }
+  @keyframes drip { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+
+  /* Efek Hujan Darah (Ringan) */
+  .raining-blood {
+    position: fixed; top: -10px; width: 2px; height: 80px;
+    background: linear-gradient(to bottom, transparent, #8b0000);
+    z-index: 1; opacity: 0.5; pointer-events: none;
+    animation: fall linear infinite;
+  }
+  @keyframes fall {
+    0% { transform: translateY(-100px); opacity: 0; }
+    10% { opacity: 0.8; }
+    100% { transform: translateY(100vh); opacity: 0; }
+  }
+
+  .header { text-align:center; padding:3rem 1rem 1rem; position: relative; z-index: 10; }
+  .header h1 { 
+    font-family:'Nosifer', cursive; font-size:2.5rem; color:#ff0000; 
+    text-shadow: 0 0 10px #ff0000, 0 0 30px #8b0000, 0 0 50px #4a0000; 
+    letter-spacing:3px; margin-bottom: 0.5rem; 
+    animation: flicker 4s infinite; 
+  }
+  @keyframes flicker { 
+    0%, 18%, 22%, 25%, 53%, 57%, 100% { text-shadow: 0 0 10px #ff0000, 0 0 30px #8b0000, 0 0 50px #4a0000; opacity: 1; }
+    20%, 24%, 55% { text-shadow: none; opacity: 0.5; }
+  }
+  .header p { color:#ff4444; font-size:0.85rem; letter-spacing:2px; text-transform:uppercase; text-shadow: 0 0 5px #ff0000; }
+
+  /* Tombol Menu */
+  .action-container { display: flex; justify-content: center; align-items: center; gap: 10px; margin: 1.5rem auto; padding: 0 1rem; flex-wrap: wrap; max-width: 400px; position: relative; z-index: 100; }
+  .top-btn { 
+    background: #0a0000; color:#ff1a1a; border:1px solid #8b0000; 
+    padding: 12px 20px; border-radius:4px; font-size:0.85rem; font-weight:bold; 
+    cursor:pointer; box-shadow:0 0 10px rgba(255,0,0,0.2); 
+    display: block; text-align: center; min-width: 120px; 
+    transition: all 0.2s; text-transform: uppercase; letter-spacing: 1px;
+  }
+  .top-btn:active { background: #ff0000; color: #fff; box-shadow: 0 0 20px #ff0000; transform: scale(0.95); }
+  .music-on { background: #8b0000 !important; color: #fff !important; border-color: #ff0000 !important; box-shadow: 0 0 15px #ff0000 !important; }
+  #btnAdmin { display: none; }
+
+  /* Grid Produk */
+  .grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1rem; padding:1rem; max-width:500px; margin:0 auto; position:relative; z-index:10; }
+  .card { 
+    background:#0a0a0a; border-radius:4px; overflow:hidden; 
+    border:1px solid #2a0000; box-shadow: 0 0 10px rgba(139,0,0,0.2); 
+    position:relative; display:flex; flex-direction:column; 
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .card:active { transform: scale(0.98); box-shadow: 0 0 20px rgba(255,0,0,0.5); border-color: #8b0000; }
+  
+  .card .img-container { height:110px; width:100%; position:relative; background:#0d0000; display:flex; align-items:center; justify-content:center; overflow:hidden; border-bottom: 1px solid #1a0000; }
+  .card .img-container img { width:100%; height:100%; object-fit:cover; filter: contrast(1.2) saturate(1.5) hue-rotate(-10deg); }
+  
+  .card .info { padding:0.75rem; position:relative; z-index:1; flex:1; display:flex; flex-direction:column; }
+  .card .info h3 { font-size:0.85rem; margin-bottom:0.25rem; color:#ddd; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing: 0.5px; }
+  .card .info .price { color:#ff0000; font-weight:800; font-size:1rem; margin-bottom:0.55rem; text-shadow: 0 0 5px rgba(255,0,0,0.5); }
+  
+  /* Tombol Aksi Produk */
+  .card-actions { display:flex; gap:0.4rem; margin-top:auto; align-items: center; }
+  .qty-control { display: flex; align-items: center; background: #0a0000; border: 1px solid #4a0000; border-radius: 4px; overflow: hidden; }
+  .qty-btn { background: transparent; color: #ff1a1a; border: none; width: 28px; height: 32px; font-size: 1.2rem; font-weight: bold; cursor: pointer; }
+  .qty-btn:active { background: #8b0000; color: #fff; }
+  .qty-num { color: #fff; font-size: 0.9rem; font-weight: bold; width: 24px; text-align: center; }
+  
+  .card .add-btn { flex:1; padding:0.55rem; background:#1a0000; color:#ff1a1a; border:1px solid #4a0000; border-radius:4px; font-weight:700; font-size:0.75rem; cursor:pointer; text-transform: uppercase; letter-spacing: 1px; }
+  .card .add-btn:active { background:#ff0000; color:#fff; box-shadow: 0 0 10px #ff0000; }
+  .card .edit-btn { width:32px; background:transparent; color:#ff1a1a; border:1px solid #4a0000; border-radius:4px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.9rem; height: 32px; }
+  .card .edit-btn:active { background:#ff0000; color:#fff; }
+
+  /* Bar Bawah */
+  .cart-bar { position:fixed; bottom:0; left:0; right:0; background:rgba(5,0,0,0.95); border-top:1px solid #4a0000; padding:0.8rem 1rem; display:flex; justify-content:space-between; align-items:center; max-width:500px; margin:0 auto; z-index:9999; gap:0.6rem; backdrop-filter: blur(5px); }
+  .cart-bar .info { font-size:0.78rem; color:#888; }
+  .cart-bar .info strong { color:#ff0000; font-size:1.1rem; display:block; text-shadow: 0 0 5px rgba(255,0,0,0.5); }
+  .order-btn { background:#8b0000; color:#fff; border:1px solid #ff0000; padding:0.75rem 1.2rem; border-radius:4px; font-weight:800; font-size:0.85rem; cursor:pointer; flex:1; text-align:center; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 10px rgba(255,0,0,0.3); }
+  .order-btn:active { background: #ff0000; box-shadow: 0 0 20px #ff0000; transform: scale(0.95); }
+  .btn-view { background:transparent; color:#ff1a1a; border:1px solid #4a0000; padding:0.7rem 0.9rem; border-radius:4px; font-weight:700; font-size:0.78rem; cursor:pointer; }
+  .btn-view:active { background:#8b0000; color:#fff; }
+  
+  /* Modal */
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:10000; opacity:0; visibility:hidden; transition:opacity 0.2s; display:flex; align-items:center; justify-content:center; padding:1rem; }
+  .modal-overlay.show { opacity:1; visibility:visible; }
+  .modal { width:100%; max-width:400px; background:#0a0000; border:1px solid #8b0000; border-radius:8px; padding:1.4rem; max-height:90vh; overflow-y:auto; position:relative; z-index:10001; box-shadow: 0 0 30px rgba(255,0,0,0.2); }
+  .modal h2 { color:#ff0000; font-family:'Nosifer', cursive; font-size:1.2rem; margin-bottom:1rem; border-bottom:1px solid #2a0000; padding-bottom:0.5rem; text-shadow: 0 0 10px #ff0000; }
+  
+  .form-group { margin-bottom:0.8rem; }
+  .form-group label { display:block; font-size:0.75rem; color:#888; margin-bottom:0.3rem; text-transform:uppercase; letter-spacing: 1px; }
+  .form-group input { width:100%; padding:0.6rem; background:#000; border:1px solid #4a0000; color:#fff; border-radius:4px; font-family:inherit; font-size:0.85rem; }
+  .form-group input:focus { outline:none; border-color:#ff0000; box-shadow: 0 0 10px rgba(255,0,0,0.3); }
+  .file-upload { display: block; width: 100%; padding: 1rem; background: #000; border: 1px dashed #8b0000; border-radius: 4px; text-align: center; color: #ff1a1a; cursor: pointer; font-size: 0.85rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+  #previewFoto { width: 100%; height: 100px; object-fit: cover; border-radius: 4px; margin-top: 10px; display: none; border: 1px solid #4a0000; }
+  .btn-submit { width:100%; padding:0.8rem; background:#8b0000; color:#fff; border:1px solid #ff0000; border-radius:4px; font-weight:bold; cursor:pointer; margin-top:0.5rem; text-transform: uppercase; letter-spacing: 1px; }
+  .btn-submit:active { background: #ff0000; }
+  .btn-danger { width:100%; padding:0.8rem; background:transparent; color:#ff1a1a; border:1px solid #4a0000; border-radius:4px; font-weight:bold; cursor:pointer; margin-top:0.5rem; text-transform: uppercase; letter-spacing: 1px; }
+  .btn-danger:active { background: #8b0000; color: #fff; }
+  
+  .cart-list { max-height:40vh; overflow-y:auto; margin-bottom:1rem; }
+  .cart-row { display:flex; gap:0.7rem; align-items:center; padding:0.75rem 0; border-bottom:1px solid #1a0000; }
+  .cart-row .emoji { font-size:1.8rem; width:44px; height:44px; display:flex; align-items:center; justify-content:center; background:#000; border-radius:4px; overflow:hidden; border: 1px solid #2a0000; }
+  .cart-row .emoji img { width:100%; height:100%; object-fit:cover; }
+  .cart-row .detail { flex:1; min-width:0; }
+  .cart-row .detail .nm { font-size:0.85rem; color:#e0e0e0; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .cart-row .detail .pr { font-size:0.8rem; color:#ff0000; margin-top:0.15rem; font-weight: bold; }
+  .cart-row .qty { display:flex; align-items:center; gap:0.4rem; margin-top:0.35rem; }
+  .cart-row .qty button { width:26px; height:26px; border:1px solid #4a0000; background:transparent; color:#ff1a1a; border-radius:4px; cursor:pointer; }
+  .cart-row .qty button:active { background: #ff0000; color: #fff; }
+  .cart-row .qty span { color:#fff; font-weight:700; font-size:0.85rem; min-width:22px; text-align:center; }
+  .cart-row .del-btn { background:transparent; border:1px solid #4a0000; color:#ff1a1a; width:32px; height:32px; border-radius:4px; cursor:pointer; }
+  .cart-row .del-btn:active { background: #ff0000; color: #fff; }
+  .close-btn { width:100%; padding:0.6rem; background:transparent; border:1px solid #4a0000; color:#888; border-radius:4px; margin-top:0.5rem; cursor:pointer; text-transform: uppercase; letter-spacing: 1px; }
+  .close-btn:active { background: #2a0000; color: #fff; }
+</style>
+</head>
+<body>
+
+  <div class="blood-drip"></div>
+
+  <div class="header">
+    <h1>SCHULKAA</h1>
+    <p>Order kalau berani... 🩸</p>
+    
+    <div class="action-container">
+      <button class="top-btn" id="btnLogin" onclick="loginAdmin()">🔒 Admin</button>
+      <button class="top-btn" id="btnAdmin" onclick="bukaFormProduk()">➕ Produk</button>
+      <button class="top-btn" id="btnMusik" onclick="toggleSound()">🎵 Musik: OFF</button>
+    </div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="cart-bar">
+    <div class="info">
+      <strong id="totalItem">0 item</strong>
+      <span id="totalHarga">Rp 0</span>
+    </div>
+    <button class="btn-view" onclick="bukaKeranjang()">📜 Daftar</button>
+    <button class="order-btn" onclick="orderWA()">🩸 Order</button>
+  </div>
+
+  <!-- Modal Produk -->
+  <div class="modal-overlay" id="modalProduk">
+    <div class="modal">
+      <h2 id="titleForm">🩸 Produk Baru</h2>
+      <input type="hidden" id="editId">
+      <div class="form-group"><label>Nama Produk</label><input type="text" id="inpNama" placeholder="Cth: Topeng"></div>
+      <div class="form-group"><label>Harga</label><input type="number" id="inpHarga" placeholder="Cth: 50000"></div>
+      <div class="form-group">
+        <label>Foto</label>
+        <label for="inpFileGambar" class="file-upload">📸 Pilih Foto</label>
+        <input type="file" id="inpFileGambar" accept="image/*" onchange="tampilkanPreview(this)" style="display:none;">
+        <img id="previewFoto" src="" alt="Preview">
+      </div>
+      <button class="btn-submit" onclick="simpanProduk()">💾 Simpan Produk</button>
+      <button class="btn-danger" id="btnHapusProduk" onclick="hapusProduk()" style="display:none;">🗑️ Hapus Produk</button>
+      <button class="close-btn" onclick="tutupModal('modalProduk')">Batal</button>
+    </div>
+  </div>
+
+  <!-- Modal Keranjang -->
+  <div class="modal-overlay" id="modalKeranjang">
+    <div class="modal">
+      <h2>🩸 Keranjang</h2>
+      <div class="cart-list" id="cartList"></div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:1rem; font-weight:bold; color:#ff0000;"><span>Total:</span><span id="modalTotal">Rp 0</span></div>
+      <button class="btn-submit" onclick="orderWA()">Order via WhatsApp</button>
+      <button class="btn-danger" onclick="kosongkanKeranjang()">Kosongkan</button>
+      <button class="close-btn" onclick="tutupModal('modalKeranjang')">Tutup</button>
+    </div>
+  </div>
+
+<script>
+  const PASSWORD_ADMIN = "schulkaa123"; 
+  const LINK_MP3 = "https://files.catbox.moe/0i9xpq.mp3"; 
+  const JSONBIN_API_KEY = "$2a$10$hj0ZeC4bjxagFeBpVOAqLO.QD3GTpTflFVTB9FQmZBFHwu6OhHYEC"; 
+  const JSONBIN_BIN_ID = "6b02dfa6ffd5d16053d592fd";
+  const WA_1 = "6283119756828"; 
+  const WA_2 = "6287721106278"; 
+
+  let produk = [];
+  let keranjang = [];
+  const rp = n => "Rp " + n.toLocaleString("id-ID");
+  let gambarBase64 = "";
+
+  // ==== FUNGSI SUARA BISIKAN SCHULKAA ====
+  function bisikanSchulkaa() {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel(); // Hentikan suara sebelumnya
+      const ucapan = new SpeechSynthesisUtterance("Schulkaa...");
+      ucapan.rate = 0.6; // Pelan
+      ucapan.pitch = 0.1; // Berat
+      ucapan.volume = 1.0;
+      window.speechSynthesis.speak(ucapan);
+    }
+  }
+
+  // Efek suara petir
+  let audioCtx = null;
+  function mainkanSuaraPetir() {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 0.3);
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.3);
+    } catch(e) {}
+  }
+
+  // Hujan darah ringan
+  setInterval(() => {
+    if(document.hidden) return;
+    const drop = document.createElement("div");
+    drop.className = "raining-blood";
+    drop.style.left = Math.random() * 100 + "vw";
+    drop.style.animationDuration = (1 + Math.random() * 2) + "s";
+    document.body.appendChild(drop);
+    setTimeout(() => drop.remove(), 3000);
+  }, 300);
+
+  // Suara petir tiap tombol diklik
+  document.body.addEventListener('click', function(e) {
+    if (e.target.closest('button')) {
+      mainkanSuaraPetir();
+    }
+  });
+
+  function loginAdmin() {
+    let pass = prompt("Masukkan Password Admin:");
+    if (pass === PASSWORD_ADMIN) {
+      document.getElementById("btnLogin").style.display = "none"; 
+      document.getElementById("btnAdmin").style.display = "block"; 
+      alert("Login Berhasil!");
+    } else {
+      alert("Password salah! 🩸");
+    }
+  }
+
+  async function ambilDataProduk() {
+    try {
+      const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
+        headers: { 'X-Master-Key': JSONBIN_API_KEY }
+      });
+      const data = await response.json();
+      if(data.record && data.record.data) produk = data.record.data; 
+      else if (Array.isArray(data.record)) produk = data.record; 
+      else produk = [];
+    } catch (error) { console.error(error); }
+    render();
+  }
+
+  async function simpanDataProduk() {
+    try {
+      await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_API_KEY },
+        body: JSON.stringify({ data: produk })
+      });
+    } catch (error) { console.error(error); }
+  }
+
+  function tampilkanPreview(input) {
+    const file = input.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        gambarBase64 = e.target.result;
+        document.getElementById("previewFoto").src = gambarBase64;
+        document.getElementById("previewFoto").style.display = "block";
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function render() {
+    const grid = document.getElementById("grid");
+    if(produk.length === 0) {
+      grid.innerHTML = `<p style="grid-column:1/-1; text-align:center; color:#666; padding-top:2rem;">Belum ada produk.</p>`;
+      return;
+    }
+    
+    grid.innerHTML = produk.map(p => {
+      const itemDiKeranjang = keranjang.find(x => x.id === p.id);
+      const qty = itemDiKeranjang ? itemDiKeranjang.qty : 0;
+
+      return `
+      <div class="card">
+        <div class="img-container"><img src="${p.gambar || 'https://via.placeholder.com/150x150/1a0000/ff0000?text=No+Image'}" alt="${p.nama}"></div>
+        <div class="info">
+          <h3>${p.nama}</h3>
+          <div class="price">${rp(p.harga)}</div>
+          
+          <div class="card-actions">
+            ${qty > 0 ? `
+              <div class="qty-control">
+                <button class="qty-btn" onclick="ubahQty(${p.id}, -1)">−</button>
+                <span class="qty-num">${qty}</span>
+                <button class="qty-btn" onclick="ubahQty(${p.id}, 1)">+</button>
+              </div>
+            ` : `
+              <button class="add-btn" onclick="tambah(${p.id})">+ Ambil</button>
+            `}
+            <button class="edit-btn" id="editBtn_${p.id}" onclick="bukaFormProduk(${p.id})" style="display:none;">✏️</button>
+          </div>
+        </div>
+      </div>
+    `}).join("");
+  }
+
+  function bukaFormProduk(id = null) {
+    if (document.getElementById("btnAdmin").style.display === "none") {
+      return alert("Kamu bukan admin!");
+    }
+    document.getElementById("inpNama").value = ""; document.getElementById("inpHarga").value = ""; document.getElementById("inpFileGambar").value = ""; document.getElementById("editId").value = ""; document.getElementById("titleForm").textContent = "🩸 Produk Baru"; document.getElementById("btnHapusProduk").style.display = "none"; document.getElementById("previewFoto").style.display = "none"; gambarBase64 = "";
+    if (id) {
+      const p = produk.find(x => x.id === id);
+      if (p) {
+        document.getElementById("titleForm").textContent = "✏️ Edit Produk"; document.getElementById("inpNama").value = p.nama; document.getElementById("inpHarga").value = p.harga; document.getElementById("editId").value = p.id; document.getElementById("btnHapusProduk").style.display = "block";
+        if(p.gambar) { gambarBase64 = p.gambar; document.getElementById("previewFoto").src = p.gambar; document.getElementById("previewFoto").style.display = "block"; }
+      }
+    }
+    document.getElementById("modalProduk").classList.add("show");
+  }
+
+  async function simpanProduk() {
+    const nama = document.getElementById("inpNama").value; const harga = document.getElementById("inpHarga").value; const editId = document.getElementById("editId").value;
+    if(!nama || !harga) return alert("Nama dan Harga wajib diisi!");
+    if(!gambarBase64 && !editId) return alert("Pilih foto dulu!");
+    if (editId) {
+      const index = produk.findIndex(x => x.id == editId);
+      if (index !== -1) { produk[index].nama = nama; produk[index].harga = parseInt(harga); if(gambarBase64) produk[index].gambar = gambarBase64; }
+    } else {
+      const newId = produk.length > 0 ? Math.max(...produk.map(p => p.id)) + 1 : 1; produk.push({ id: newId, nama: nama, harga: parseInt(harga), gambar: gambarBase64 });
+    }
+    await simpanDataProduk(); tutupModal("modalProduk"); render(); alert("Produk berhasil disimpan! 🩸");
+  }
+
+  async function hapusProduk() {
+    const editId = document.getElementById("editId").value; if(!editId) return;
+    if(confirm("Yakin mau hapus produk i
