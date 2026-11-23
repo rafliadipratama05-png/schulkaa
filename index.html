@@ -197,28 +197,29 @@ function snapshot(){
 }
 var pubBusy=false;
 function publishNow(){
-   if(pubBusy) return;
-   pubBusy = true;
-   toast("Menyimpan untuk semua orang...");
-   fetch(API,{
-     method:"PUT",
-     headers:{
-         "Content-Type":"application/json",
-         "X-Master-Key":KEY
-     },
-     body:JSON.stringify({data:produk})
-   })
-   .then(function(r){
-     if(!r.ok) throw new Error("gagal");
-     toast("✅ Tersimpan untuk semua orang!");
-   })
-   .catch(function(err){
-     toast("❌ Gagal simpan! Coba buka link website asli, jangan preview");
-   })
-   .finally(function(){
-     pubBusy = false;
-   })
-  }
+  if(pubBusy) return;
+  pubBusy=true;
+  toast("Menyimpan untuk semua orang...");
+
+  fetch("https://api.jsonbin.io/v3/b/6b02dfa6ffd5d16053d592fd",{
+    method:"PUT",
+    headers:{
+      "Content-Type":"application/json",
+      "X-Master-Key":"$2a$10$hj0ZeC4bjxagFeBpVOAqLO.QD3GTpTflFVTB9FQmZBFHwu6OhHYEC"
+    },
+    body:JSON.stringify({data:produk})
+  })
+  .then(res=>{
+    if(!res.ok) throw new Error("gagal");
+    toast("✅ Tersimpan untuk semua orang!");
+  })
+  .catch(err=>{
+    toast("❌ Gagal simpan JSONbin (CORS Github Pages)");
+  })
+  .finally(()=>{
+    pubBusy=false;
+  })
+}
 function save(){
   try{
     localStorage.setItem(KEY,JSON.stringify(produk));
