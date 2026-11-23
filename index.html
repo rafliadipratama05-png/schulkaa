@@ -157,12 +157,30 @@ function close_(id){$(id).classList.remove("show");}
 
 var pdata={v:0,items:DEFAULT.slice()};
 function load(){
-  try{pdata=JSON.parse($("pdata").textContent);}catch(e){}
-  produk=Array.isArray(pdata.items)?pdata.items.slice():DEFAULT.slice();
-  try{isAdmin=localStorage.getItem(KEY_ADMIN)==="true";}catch(e){}
-  if(isAdmin&&!pdata.v){try{var s=localStorage.getItem(KEY);if(s){produk=JSON.parse(s);setTimeout(function(){toast("Produk lama dimuat. Tekan ☁️ Terbitkan");},600);}}catch(e){}}
-  setAdmin();
-}
+   try{
+     pdata=JSON.parse($("pdata").textContent);
+   }catch(e){}
+   // ⬇️ PRIORITAS: AMBIL DATA DARI JSONBIN DULU
+   fetch(API+"/latest",{headers:{"X-Master-Key":KEY}})
+   .then(r=>r.json())
+   .then(d=>{
+     if(d.record && Array.isArray(d.record.data)){
+       produk = d.record.data;
+     }else{
+       produk = Array.isArray(pdata.items)?pdata.items.slice():DEFAULT.slice();
+     }
+     render();
+     setAdmin();
+   })
+   .catch(()=>{
+     // Kalau JSONbin error, pakai data backup
+     produk = Array.isArray(pdata.items)?pdata.items.slice():DEFAULT.slice();
+     render();
+     setAdmin();
+   })
+   try{isAdmin=localStorage.getItem(KEY_ADMIN)==="true";}catch(e){}
+   setAdmin();
+  }
 function setAdmin(){$("btnLogin").style.display=isAdmin?"none":"block";$("btnAdmin").style.display=isAdmin?"block":"none";$("btnPub").style.display=isAdmin?"block":"none";}
 function snapshot(){
   var c=document.documentElement.cloneNode(true);
