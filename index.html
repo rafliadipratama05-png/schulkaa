@@ -201,8 +201,12 @@ function publishNow(){
      pubBusy = false;
    })
   }
-function save(){try{localStorage.setItem(KEY,JSON.stringify(produk));}catch(e){}publishNow();}
-
+function save(){
+  try{
+    localStorage.setItem(KEY,JSON.stringify(produk));
+  }catch(e){}
+  publishNow();
+}
 function imgOf(p){return p.img?'<img src="'+p.img+'" alt="">':(p.emoji||"🩸");}
 function render(){
   $("grid").innerHTML=produk.map(function(p){
