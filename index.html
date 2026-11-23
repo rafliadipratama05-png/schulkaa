@@ -179,16 +179,28 @@ function snapshot(){
 }
 var pubBusy=false;
 function publishNow(){
-  if(pubBusy)return;
-  if(!window.claude||!window.claude.use){toast("Fitur simpan tidak tersedia di sini");return;}
-  pubBusy=true;toast("Menyimpan untuk semua orang...");
-  window.claude.use("artifact").then(function(art){
-    if(!art){pubBusy=false;toast("Hanya pemilik halaman yang bisa menyimpan");return;}
-    return art.publish(snapshot()).then(function(){toast("Tersimpan ✓");}).catch(function(e){
-      toast(e&&e.code==="conflict"?"Ada perubahan lain, halaman dimuat ulang":"Gagal menyimpan: "+((e&&(e.code||e.message))||"error"));
-    }).then(function(){pubBusy=false;});
-  }).catch(function(){pubBusy=false;toast("Gagal menyimpan");});
-}
+   if(pubBusy) return;
+   pubBusy = true;
+   toast("Menyimpan untuk semua orang...");
+   fetch(API,{
+     method:"PUT",
+     headers:{
+         "Content-Type":"application/json",
+         "X-Master-Key":KEY
+     },
+     body:JSON.stringify({data:produk})
+   })
+   .then(function(r){
+     if(!r.ok) throw new Error("gagal");
+     toast("✅ Tersimpan untuk semua orang!");
+   })
+   .catch(function(err){
+     toast("❌ Gagal simpan! Coba buka link website asli, jangan preview");
+   })
+   .finally(function(){
+     pubBusy = false;
+   })
+  }
 function save(){try{localStorage.setItem(KEY,JSON.stringify(produk));}catch(e){}publishNow();}
 
 function imgOf(p){return p.img?'<img src="'+p.img+'" alt="">':(p.emoji||"🩸");}
